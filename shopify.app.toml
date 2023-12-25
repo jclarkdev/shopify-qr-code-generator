@@ -2,7 +2,7 @@
 
 name = "qr-code-generator"
 client_id = "e15ac2ff184407a0075831dad896075d"
-application_url = "https://films-paypal-matt-ceiling.trycloudflare.com"
+application_url = "https://tanzania-transport-favourites-easter.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://films-paypal-matt-ceiling.trycloudflare.com/auth/callback",
-  "https://films-paypal-matt-ceiling.trycloudflare.com/auth/shopify/callback",
-  "https://films-paypal-matt-ceiling.trycloudflare.com/api/auth/callback"
+  "https://tanzania-transport-favourites-easter.trycloudflare.com/auth/callback",
+  "https://tanzania-transport-favourites-easter.trycloudflare.com/auth/shopify/callback",
+  "https://tanzania-transport-favourites-easter.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
