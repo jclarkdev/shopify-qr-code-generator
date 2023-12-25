@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { json, redirect } from "@remix-run/node";
 import {
   useActionData,
@@ -16,6 +16,7 @@ import {
   ColorPicker,
   Divider,
   EmptyState,
+  Grid,
   InlineStack,
   InlineError,
   Layout,
@@ -25,6 +26,7 @@ import {
   Thumbnail,
   BlockStack,
   PageActions,
+  Tabs
 } from "@shopify/polaris";
 import { ImageMajor } from "@shopify/polaris-icons";
 import chroma from "chroma-js";
@@ -86,11 +88,10 @@ export async function action({ request, params }) {
   return redirect(`/app/qrcodes/${qrCode.id}`);
 }
 
-
 export default function QRCodeForm() {
   const errors = useActionData()?.errors || {};
-
   const qrCode = useLoaderData();
+
   const [formState, setFormState] = useState(qrCode);
   const [cleanFormState, setCleanFormState] = useState(qrCode);
   const initialFgColor = qrCode.foregroundColor ? chroma(qrCode.foregroundColor).hsv() : { hue: 0, saturation: 0, brightness: 0, alpha: 1 };
@@ -129,6 +130,26 @@ export default function QRCodeForm() {
                   JSON.stringify(backgroundColor) !== JSON.stringify(initialBgColorState);
 
 
+  const [selectedTab, setSelectedTab] = useState(0);
+
+  const handleTabChange = useCallback(
+    (selectedTabIndex) => setSelectedTab(selectedTabIndex),
+    [],
+  );
+
+  const tabs = [
+    {
+      id: 'all-customers-1',
+      content: 'General',
+      panelID: 'all-customers-content-1',
+    },
+    {
+      id: 'style-1',
+      content: 'Style',
+      panelID: 'style-content-1',
+    },
+    // Add other tabs if needed
+  ];
 
   const nav = useNavigation();
   const isSaving =
@@ -176,70 +197,79 @@ export default function QRCodeForm() {
     submit(data, { method: "post" });
   }
 
-
-
-  return (
-    <Page>
-      <ui-title-bar title={qrCode.id ? "Edit QR code" : "Create new QR code"}>
-        <button variant="breadcrumb" onClick={() => navigate("/app")}>
-          QR codes
-        </button>
-      </ui-title-bar>
-      <Layout>
-        <Layout.Section>
-          <BlockStack gap="500">
-            <Card>
-              <BlockStack gap="500">
-                <Text as={"h2"} variant="headingLg">
-                  Title
-                </Text>
-                <TextField
-                  id="title"
-                  helpText="Only store staff can see this title"
-                  label="title"
-                  labelHidden
-                  autoComplete="off"
-                  value={formState.title}
-                  onChange={(title) => setFormState({ ...formState, title })}
-                  error={errors.title}
-                />
-              </BlockStack>
-            </Card>
-            <Card>
-              <BlockStack gap="500">
-                <InlineStack align="space-between">
-                  <Text as={"h2"} variant="headingLg">
-                    Product
-                  </Text>
-                  {formState.productId ? (
-                    <Button variant="plain" onClick={selectProduct}>
-                      Change product
-                    </Button>
-                  ) : null}
-                </InlineStack>
-                {formState.productId ? (
-                  <InlineStack blockAlign="center" gap="500">
-                    <Thumbnail
-                      source={formState.productImage || ImageMajor}
-                      alt={formState.productAlt}
-                    />
-                    <Text as="span" variant="headingMd" fontWeight="semibold">
-                      {formState.productTitle}
-                    </Text>
-                  </InlineStack>
-                ) : (
-                  <BlockStack gap="200">
-                    <Button onClick={selectProduct} id="select-product">
-                      Select product
-                    </Button>
-                    {errors.productId ? (
-                      <InlineError
-                        message={errors.productId}
-                        fieldID="myFieldID"
-                      />
+  // Tab Content Rendering
+  const renderTabContent = () => {
+    switch (selectedTab) {
+      case 1: // Style tab
+        return (
+          <>
+            <BlockStack gap="500">
+              <Grid>
+                <Grid.Cell columnSpan={{xs: 6, sm: 3, md: 3, lg: 6, xl: 6}}>
+                  <Text>Foreground Color</Text>
+                  <ColorPicker onChange={setForegroundColor} color={foregroundColor} />
+                </Grid.Cell>
+                <Grid.Cell columnSpan={{xs: 6, sm: 3, md: 3, lg: 6, xl: 6}}>
+                  <Text>Background Color</Text>
+                  <ColorPicker onChange={setBackgroundColor} color={backgroundColor} />
+                </Grid.Cell>
+              </Grid>
+            </BlockStack>
+          </>
+        );
+      default: // General tab
+        return (
+          <>
+            <BlockStack gap="500">
+              <Card>
+                <BlockStack gap="500">
+                  <Text as={"h2"} variant="headingLg">Title</Text>
+                  <TextField
+                    id="title"
+                    helpText="Only store staff can see this title"
+                    label="Title"
+                    labelHidden
+                    autoComplete="off"
+                    value={formState.title}
+                    onChange={(title) => setFormState({ ...formState, title })}
+                    error={errors.title}
+                  />
+                </BlockStack>
+              </Card>
+              <Card>
+                <BlockStack gap="500">
+                  <InlineStack align="space-between">
+                    <Text as={"h2"} variant="headingLg">Product</Text>
+                    {formState.productId ? (
+                      <Button variant="plain" onClick={selectProduct}>
+                        Change product
+                      </Button>
                     ) : null}
-                  </BlockStack>
-                )}
+                  </InlineStack>
+                  {formState.productId ? (
+                    <InlineStack blockAlign="center" gap="500">
+                      <Thumbnail
+                        source={formState.productImage || ImageMajor}
+                        alt={formState.productAlt}
+                      />
+                      <Text as="span" variant="headingMd" fontWeight="semibold">
+                        {formState.productTitle}
+                      </Text>
+                    </InlineStack>
+                  ) : (
+                    <BlockStack gap="200">
+                      <Button onClick={selectProduct} id="select-product">
+                        Select product
+                      </Button>
+                      {errors.productId ? (
+                        <InlineError
+                          message={errors.productId}
+                          fieldID="myFieldID"
+                        />
+                      ) : null}
+                    </BlockStack>
+                  )}
+                </BlockStack>
                 <Bleed marginInlineStart="200" marginInlineEnd="200">
                   <Divider />
                 </Bleed>
@@ -255,10 +285,7 @@ export default function QRCodeForm() {
                     ]}
                     selected={[formState.destination]}
                     onChange={(destination) =>
-                      setFormState({
-                        ...formState,
-                        destination: destination[0],
-                      })
+                      setFormState({ ...formState, destination: destination[0] })
                     }
                     error={errors.destination}
                   />
@@ -272,21 +299,28 @@ export default function QRCodeForm() {
                     </Button>
                   ) : null}
                 </InlineStack>
-              </BlockStack>
-            </Card>
-            <Card>
-              <BlockStack gap="500">
-                <Text as={"h2"} variant="headingLg">Customize QR Code</Text>
-                <BlockStack gap="500">
-                  <Text>Foreground Color</Text>
-                  <ColorPicker onChange={setForegroundColor} color={foregroundColor} />
-                </BlockStack>
-                <BlockStack gap="500">
-                  <Text>Background Color</Text>
-                  <ColorPicker onChange={setBackgroundColor} color={backgroundColor} />
-                </BlockStack>
-              </BlockStack>
-            </Card>
+              </Card>
+            </BlockStack>
+          </>
+        );
+    }
+  };
+
+  return (
+    <Page>
+      <ui-title-bar title={qrCode.id ? "Edit QR code" : "Create new QR code"}>
+        <button variant="breadcrumb" onClick={() => navigate("/app")}>
+          QR codes
+        </button>
+      </ui-title-bar>
+      <Layout>
+      <Layout.Section>
+          <BlockStack gap="500">
+            <Tabs tabs={tabs} selected={selectedTab} onSelect={handleTabChange}>
+              <Card>
+                {renderTabContent()}
+              </Card>
+            </Tabs>
           </BlockStack>
         </Layout.Section>
         <Layout.Section variant="oneThird">

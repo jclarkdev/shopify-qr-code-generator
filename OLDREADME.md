@@ -1,15 +1,14 @@
-# QR Code Generator
+# Shopify App Template - Remix
 
-<!-- If you would like to install this app on your store, please visit the [Shopify App Store](https://apps.shopify.com/mot-qr-code-generator). -->
+This is a template for building a [Shopify app](https://shopify.dev/docs/apps/getting-started) using the [Remix](https://remix.run) framework.
 
-For more information about this app, please visit our [QR Code Generator](https://www.merchantsoftomorrow.com/shopify/apps/qr-code-generator/) website.
+Rather than cloning this repo, you can use your preferred package manager and the Shopify CLI with [these steps](https://shopify.dev/docs/apps/getting-started/create).
 
-To build this app, please follow the instructions below.
+Visit the [`shopify.dev` documentation](https://shopify.dev/docs/api/shopify-app-remix) for more details on the Remix app package.
 
-## Introduction
-This app was built using the [Remix](https://remix.run) framework. It is built on top of [React](https://reactjs.org/), [Node.js](https://nodejs.org/en/), and [Express](https://expressjs.com/). It also uses [Prisma](https://www.prisma.io/) to store session data. Additionally, we leverage [Shopify App Bridge](https://shopify.dev/docs/apps/tools/app-bridge) to allow the app to seamlessly integrate with Shopify's Admin, and the QR Code generation is done using [qrcode](https://www.npmjs.com/package/qrcode).
+## Quick start
 
-### Prerequisites for local development
+### Prerequisites
 
 1. You must [download and install Node.js](https://nodejs.org/en/download/) if you don't already have it.
 2. You must [create a Shopify partner account](https://partners.shopify.com/signup) if you don’t have one.
@@ -17,31 +16,47 @@ This app was built using the [Remix](https://remix.run) framework. It is built o
 
 ### Setup
 
-First, clone this repository:
+If you used the CLI to create the template, you can skip this section.
 
-```shell
-git clone https://github.com/jclarkdev/shopify-qr-code-generator.git qr-code-generator
-```
-
-Then, navigate to the directory you cloned the repository to:
-
-```shell
-cd qr-code-generator
-```
-
-Next, install the dependencies:
+Using yarn:
 
 ```shell
 yarn install
 ```
 
-Finally, run the app:
+Using npm:
+
+```shell
+npm install
+```
+
+Using pnpm:
+
+```shell
+pnpm install
+```
+
+### Local Development
+
+Using yarn:
 
 ```shell
 yarn dev
 ```
 
-Once running, press P to open the URL to your app. Once you click install, you can start development.
+Using npm:
+
+```shell
+npm run dev
+```
+
+Using pnpm:
+
+```shell
+pnpm run dev
+```
+
+Press P to open the URL to your app. Once you click install, you can start development.
 
 Local development is powered by [the Shopify CLI](https://shopify.dev/docs/apps/tools/cli). It logs into your partners account, connects to an app, provides environment variables, updates remote config, creates a tunnel and provides commands to generate extensions.
 

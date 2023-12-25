@@ -53,8 +53,8 @@ const QRTable = ({ qrCodes }) => (
     itemCount={qrCodes.length}
     headings={[
       { title: "Thumbnail", hidden: true },
-      { title: "Title" },
-      { title: "Product" },
+      { title: "Campaign" },
+      { title: "Content" },
       { title: "Date created" },
       { title: "Scans" },
     ]}
