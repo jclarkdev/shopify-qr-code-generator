@@ -25,9 +25,17 @@ export async function getQRCodes(shop, graphql) {
   );
 }
 
-export function getQRCodeImage(id) {
+export function getQRCodeImage(id, foregroundColor = '#000000', backgroundColor = '#ffffff') {
   const url = new URL(`/qrcodes/${id}/scan`, process.env.SHOPIFY_APP_URL);
-  return qrcode.toDataURL(url.href);
+
+  const qrCodeOptions = {
+    color: {
+      dark: foregroundColor,  // Foreground color
+      light: backgroundColor  // Background color
+    }
+  };
+
+  return qrcode.toDataURL(url.href, qrCodeOptions);
 }
 
 export function getDestinationUrl(qrCode) {
@@ -42,7 +50,8 @@ export function getDestinationUrl(qrCode) {
 }
 
 async function supplementQRCode(qrCode, graphql) {
-  const qrCodeImagePromise = getQRCodeImage(qrCode.id);
+  const qrCodeImagePromise = getQRCodeImage(qrCode.id, qrCode.foregroundColor, qrCode.backgroundColor);
+
 
   const response = await graphql(
     `

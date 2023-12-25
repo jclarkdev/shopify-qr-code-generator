@@ -31,4 +31,6 @@ model QRCode {
   destination      String
   scans            Int      @default(0)
   createdAt        DateTime @default(now())
+  foregroundColor  String?
+  backgroundColor  String?
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { json, redirect } from "@remix-run/node";
 import {
   useActionData,
@@ -13,6 +13,7 @@ import {
   Bleed,
   Button,
   ChoiceList,
+  ColorPicker,
   Divider,
   EmptyState,
   InlineStack,
@@ -26,6 +27,7 @@ import {
   PageActions,
 } from "@shopify/polaris";
 import { ImageMajor } from "@shopify/polaris-icons";
+import chroma from "chroma-js";
 
 import db from "../db.server";
 import { getQRCode, validateQRCode } from "../models/QRCode.server";
@@ -47,30 +49,43 @@ export async function action({ request, params }) {
   const { session } = await authenticate.admin(request);
   const { shop } = session;
 
-  /** @type {any} */
-  const data = {
-    ...Object.fromEntries(await request.formData()),
+  const formData = await request.formData();
+  const fgColorHex = formData.get("foregroundColor");
+  const bgColorHex = formData.get("backgroundColor");
+
+  const qrCodeData = {
+    // Extract other QR code relevant data from formData
+    title: formData.get("title"),
+    productId: formData.get("productId"),
+    productVariantId: formData.get("productVariantId"),
+    productHandle: formData.get("productHandle"),
+    destination: formData.get("destination"),
+    // Include the shop information if needed
     shop,
+    // Add color information
+    foregroundColor: fgColorHex,
+    backgroundColor: bgColorHex,
   };
 
-  if (data.action === "delete") {
+  if (formData.get("action") === "delete") {
     await db.qRCode.delete({ where: { id: Number(params.id) } });
     return redirect("/app");
   }
 
-  const errors = validateQRCode(data);
+  const errors = validateQRCode(qrCodeData);
 
   if (errors) {
     return json({ errors }, { status: 422 });
   }
 
-  const qrCode =
-    params.id === "new"
-      ? await db.qRCode.create({ data })
-      : await db.qRCode.update({ where: { id: Number(params.id) }, data });
+  // Depending on whether it's a new QR code or an update, handle accordingly
+  const qrCode = params.id === "new"
+    ? await db.qRCode.create({ data: qrCodeData })
+    : await db.qRCode.update({ where: { id: Number(params.id) }, data: qrCodeData });
 
   return redirect(`/app/qrcodes/${qrCode.id}`);
 }
+
 
 export default function QRCodeForm() {
   const errors = useActionData()?.errors || {};
@@ -78,7 +93,42 @@ export default function QRCodeForm() {
   const qrCode = useLoaderData();
   const [formState, setFormState] = useState(qrCode);
   const [cleanFormState, setCleanFormState] = useState(qrCode);
-  const isDirty = JSON.stringify(formState) !== JSON.stringify(cleanFormState);
+  const initialFgColor = qrCode.foregroundColor ? chroma(qrCode.foregroundColor).hsv() : { hue: 0, saturation: 0, brightness: 0, alpha: 1 };
+  const initialBgColor = qrCode.backgroundColor ? chroma(qrCode.backgroundColor).hsv() : { hue: 0, saturation: 0, brightness: 1, alpha: 1 };
+
+  // Store the initial color states for comparison later
+  const initialFgColorState = initialFgColor;
+  const initialBgColorState = initialBgColor;
+
+  const [foregroundColor, setForegroundColor] = useState(initialFgColor);
+  const [backgroundColor, setBackgroundColor] = useState(initialBgColor);
+
+  useEffect(() => {
+    if (qrCode.foregroundColor && qrCode.backgroundColor) {
+      const fgColorHSBA = chroma(qrCode.foregroundColor).hsv();
+      const bgColorHSBA = chroma(qrCode.backgroundColor).hsv();
+
+      setForegroundColor({
+        hue: fgColorHSBA[0],
+        saturation: fgColorHSBA[1],
+        brightness: fgColorHSBA[2],
+        alpha: 1, // Assuming no alpha channel for HEX colors
+      });
+
+      setBackgroundColor({
+        hue: bgColorHSBA[0],
+        saturation: bgColorHSBA[1],
+        brightness: bgColorHSBA[2],
+        alpha: 1,
+      });
+    }
+  }, [qrCode.foregroundColor, qrCode.backgroundColor]);
+
+  const isDirty = JSON.stringify(formState) !== JSON.stringify(cleanFormState) ||
+                  JSON.stringify(foregroundColor) !== JSON.stringify(initialFgColorState) ||
+                  JSON.stringify(backgroundColor) !== JSON.stringify(initialBgColorState);
+
+
 
   const nav = useNavigation();
   const isSaving =
@@ -111,17 +161,22 @@ export default function QRCodeForm() {
 
   const submit = useSubmit();
   function handleSave() {
-    const data = {
-      title: formState.title,
-      productId: formState.productId || "",
-      productVariantId: formState.productVariantId || "",
-      productHandle: formState.productHandle || "",
-      destination: formState.destination,
-    };
+    const fgColorHex = chroma.hsv([foregroundColor.hue, foregroundColor.saturation, foregroundColor.brightness]).hex();
+    const bgColorHex = chroma.hsv([backgroundColor.hue, backgroundColor.saturation, backgroundColor.brightness]).hex();
+    const data = new FormData();
+    data.append("title", formState.title);
+    data.append("productId", formState.productId || "");
+    data.append("productVariantId", formState.productVariantId || "");
+    data.append("productHandle", formState.productHandle || "");
+    data.append("destination", formState.destination);
+    data.append("foregroundColor", fgColorHex);
+    data.append("backgroundColor", bgColorHex);
 
     setCleanFormState({ ...formState });
     submit(data, { method: "post" });
   }
+
+
 
   return (
     <Page>
@@ -219,6 +274,19 @@ export default function QRCodeForm() {
                 </InlineStack>
               </BlockStack>
             </Card>
+            <Card>
+              <BlockStack gap="500">
+                <Text as={"h2"} variant="headingLg">Customize QR Code</Text>
+                <BlockStack gap="500">
+                  <Text>Foreground Color</Text>
+                  <ColorPicker onChange={setForegroundColor} color={foregroundColor} />
+                </BlockStack>
+                <BlockStack gap="500">
+                  <Text>Background Color</Text>
+                  <ColorPicker onChange={setBackgroundColor} color={backgroundColor} />
+                </BlockStack>
+              </BlockStack>
+            </Card>
           </BlockStack>
         </Layout.Section>
         <Layout.Section variant="oneThird">
@@ -266,7 +334,7 @@ export default function QRCodeForm() {
               },
             ]}
             primaryAction={{
-              content: "Save",
+              content: qrCode.id ? "Update QR Code" : "Generate QR Code",
               loading: isSaving,
               disabled: !isDirty || isSaving || isDeleting,
               onAction: handleSave,
